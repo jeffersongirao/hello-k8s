@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -15,6 +15,11 @@ var (
 		Help: "Count of all HTTP requests",
 	}, []string{"code", "method"})
 )
+
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+}
 
 func main() {
 	bind := ""
@@ -35,8 +40,11 @@ func main() {
 	})
 
 	http.Handle("/", promhttp.InstrumentHandlerCounter(httpRequestsTotal, successHandler))
+	log.WithFields(log.Fields{"handler": "success"}).Info("initialized")
 	http.Handle("/err", promhttp.InstrumentHandlerCounter(httpRequestsTotal, errorHandler))
+	log.WithFields(log.Fields{"handler": "err"}).Info("initialized")
 
 	http.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
+	log.WithFields(log.Fields{"handler": "metrics"}).Info("initialized")
 	log.Fatal(http.ListenAndServe(bind, nil))
 }
