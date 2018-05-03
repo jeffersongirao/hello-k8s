@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -31,11 +32,21 @@ func main() {
 	r.MustRegister(httpRequestsTotal)
 
 	successHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hello Kubernetes."))
+		c := os.Getenv("HELLO_K8S_COUNTRY")
+		if c == "" {
+			c = "Somewhere on Earth"
+		}
+		fmt.Fprintf(w, "Hello from %s!\n", c)
+
+		a := os.Getenv("HELLO_K8S_THE_ANSWER")
+		if a == "" {
+			a = "101010"
+		}
+		fmt.Fprintf(w, "The Answer to the Ultimate Question of Life, the Universe, and Everything is %s", a)
 	})
 
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.WithFields(log.Fields{"handler": "err"}).Error("out of coffee")
 		w.WriteHeader(http.StatusInternalServerError)
 	})
 
